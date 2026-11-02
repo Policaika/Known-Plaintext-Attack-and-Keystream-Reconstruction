@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "ciphertext.txt"
 #include "class.h"
 
 

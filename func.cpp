@@ -2,7 +2,7 @@
 
 // Для Separator
 
-void Separator::SeparateNumF(std::ifstream& in)
+size_t Separator::SeparateNumF(std::ifstream& in)
 {
     char temp_variable;
     size_t count = 0;
@@ -14,6 +14,7 @@ void Separator::SeparateNumF(std::ifstream& in)
         }
     }
     size = count;
+    return size;
 }
 
 void Separator::SeparateInputNum(std::ifstream& in)
@@ -45,23 +46,45 @@ void Separator::HexToDec(char*& massive)
     }
 }
 
-void Separator::DecToBool(char*& AdditionalSeparate, char*& BoolSeparate)
-{
+unsigned char Separator::DecToBool(int condidate, int byte)
+{ 
     int bytesize = size/2;
-    AdditionalSeparate = new char[bytesize];
+    BoolSeparatedNum = new unsigned char[bytesize];                 //Выделение памяти перенести в конструктор!!!!!!!!!!!!!!!!!!!!!!!!!
+    BoolSeparatedNumAdditional = new std::string[bytesize];
     for(int i = 0; i<bytesize; ++i)
     {
-        int first = *(AdditionalSeparate+i*2);
-        int second = *(AdditionalSeparate+i*2+1);
-        *(BoolSeparate+i) = first * 16 + second;
-    } // Переписать под char, см GetBits
+        int first = *(SeparateNumAdditional+i*2);
+        int second = *(SeparateNumAdditional+i*2+1);
+        *(BoolSeparatedNum+i) = first * 16 + second;
+    }
+    for(int i = 0; i<bytesize; ++i)
+    {
+        for(int j = 7; j>=0; --j)
+        {
+            int bit = (*(BoolSeparatedNum+i) >> j) & 1;
+            if(bit == 0)
+            {
+                *(BoolSeparatedNumAdditional+i) += '0';
+            }
+            else if(bit == 1)
+            {
+                *(BoolSeparatedNumAdditional+i) += '1';
+            }
+        }
+        
+    }
+    return BoolSeparatedNumAdditional[condidate][byte];
+}
 
+size_t Separator::GetSize()
+{
+    return size;
 }
 
 
-// Для Gamma
+// Для WayToGamma
 
-void Gamma::GenerateCondidates()
+void WayToGamma::GenerateCondidates()
 {
     size = 60;
     DateTimeString = new std::string[size];
@@ -76,11 +99,10 @@ void Gamma::GenerateCondidates()
     }
 }
 
-void Gamma::GetBits()
+unsigned char WayToGamma::GetBits(int candidate, int byte)
 {
     size = 60;
     DateTimeStringAdditional = new std::string[size];
-    DateTimeBits = new size_t[size];
     for(int i = 0; i<size; ++i)
     {
         std::string temp_string_variable = *(DateTimeString+i);
@@ -99,6 +121,69 @@ void Gamma::GetBits()
                     *(DateTimeStringAdditional+i) += "1";
                 }
             }
+        }
+    }
+    return DateTimeStringAdditional[candidate][byte];
+}
+
+size_t WayToGamma::GetSize()
+{
+    return size;
+}
+
+// Для CryproKey
+
+void CryptoKey::GetFirst128BitKey(WayToGamma& GammaObj, Separator& SeparatorObj)
+{
+    size = GammaObj.GetSize();
+    KeyBits = new std::string[size];
+    gamma = new std::string[size];
+    int count = 0;
+    int byte = 0;
+    for(int i = 0; i<size; ++i)
+    {
+        if(byte = 16)
+        {
+            byte = 0;
+        }
+        for(int j = 0; j<128; ++j)
+        {
+            if(count = 8)
+            {
+                count = 0;
+            }
+            *(KeyBits+i) = GammaObj.GetBits(i,j) ^ SeparatorObj.DecToBool(byte,count);
+            ++count;
+        }
+        ++byte;
+    }
+}
+
+void CryptoKey::GetAllBitKey(Separator& SeparatorObj, std::ifstream& in)
+{
+    int temp_size = SeparatorObj.GetSize() * 4;
+    for(int i = 0; i<size; ++i)
+    {
+        for(int j = 0; j<128; ++j)
+        {
+            gamma[i][j] = KeyBits[i][j];
+        }
+        gamma[i].resize(temp_size);
+        for(int j = 0; j<temp_size-128; ++j)
+        {
+            gamma[i][j+128] = gamma[i][j] ^ gamma[i][j+1] ^ gamma[i][j+2] ^ gamma[i][j+7];
+        }
+    }
+}
+
+void CryptoKey::GetMessage(Separator& SeparatorObj)
+{
+    int sizebyte = size/2;
+    for(int i = 0; i<size; ++i)
+    {
+        for(int j = 0; j<sizebyte; ++j)
+        {
+            text[i][j] ^= gamma[i][j];
         }
     }
 }
