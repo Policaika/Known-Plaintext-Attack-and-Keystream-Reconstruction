@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include "ciphertext.txt"
+#include "class.h"
 
 
 int main(int argc, char* argv[])
