@@ -2,46 +2,29 @@
 
 // Для Separator
 
-size_t Separator::SeparateNumF(std::ifstream& in)
-{
-    char temp_variable;
-    size_t count = 0;
-    while(in.get(temp_variable))
-    {
-        if(temp_variable != ' ')
-        {
-            ++count;
-        }
-    }
-    size = count;
-    return size;
-}
-
 void Separator::SeparateInputNum(std::ifstream& in)
 {
-    SeparateNum = new char[size];
     for(int i = 0; i<size; ++i)
     {
         in >> *(SeparateNum+i);
     }
 }
 
-void Separator::HexToDec(char*& massive)
+void Separator::HexToDec()
 {
-    SeparateNumAdditional = new std::size_t[size];
     for(int i = 0; i<size; ++i)
     {
-        if(*(massive+i) >= '0' && *(massive+i) <= '9')
+        if(*(SeparateNum+i) >= '0' && *(SeparateNum+i) <= '9')
         {
-            *(SeparateNumAdditional+i) = *(massive+i) - '0';
+            *(SeparateNumAdditional+i) = *(SeparateNum+i) - '0';
         }
-        else if(*(massive+i) >= 'A' && *(massive+i) <= 'F')
+        else if(*(SeparateNum+i) >= 'A' && *(SeparateNum+i) <= 'F')
         {
-            *(SeparateNumAdditional+i) = *(massive+i) - 'A' + 10;
+            *(SeparateNumAdditional+i) = *(SeparateNum+i) - 'A' + 10;
         }
-        else if(*(massive+i) >= 'a' && *(massive+i) <= 'f')
+        else if(*(SeparateNum+i) >= 'a' && *(SeparateNum+i) <= 'f')
         {
-            *(SeparateNumAdditional+i) = *(massive+i) - 'a' + 10;
+            *(SeparateNumAdditional+i) = *(SeparateNum+i) - 'a' + 10;
         }
     }
 }
@@ -49,8 +32,6 @@ void Separator::HexToDec(char*& massive)
 unsigned char Separator::DecToBool(int condidate, int byte)
 { 
     int bytesize = size/2;
-    BoolSeparatedNum = new unsigned char[bytesize];                 //Выделение памяти перенести в конструктор!!!!!!!!!!!!!!!!!!!!!!!!!
-    BoolSeparatedNumAdditional = new std::string[bytesize];
     for(int i = 0; i<bytesize; ++i)
     {
         int first = *(SeparateNumAdditional+i*2);
@@ -86,11 +67,9 @@ size_t Separator::GetSize()
 
 void WayToGamma::GenerateCondidates()
 {
-    size = 60;
-    DateTimeString = new std::string[size];
     for(int i = 0; i<60; ++i)
     {
-        *(DateTimeString+i) = "2026-10-16T";
+        *(DateTimeString+i) = "2026-10-16T12:";
         if(i<10)
         {
             *(DateTimeString+i) += "0";
@@ -101,13 +80,11 @@ void WayToGamma::GenerateCondidates()
 
 unsigned char WayToGamma::GetBits(int candidate, int byte)
 {
-    size = 60;
-    DateTimeStringAdditional = new std::string[size];
     for(int i = 0; i<size; ++i)
     {
         std::string temp_string_variable = *(DateTimeString+i);
         for(std::string::iterator it = temp_string_variable.begin(); it != temp_string_variable.end(); ++it)
-        {
+        {  
             char byte = static_cast<char>(*it);
             for(int j = 7; j>=0; --j)
             {
@@ -135,55 +112,63 @@ size_t WayToGamma::GetSize()
 
 void CryptoKey::GetFirst128BitKey(WayToGamma& GammaObj, Separator& SeparatorObj)
 {
-    size = GammaObj.GetSize();
-    KeyBits = new std::string[size];
-    gamma = new std::string[size];
-    int count = 0;
-    int byte = 0;
+    int count;
+    int byte;
     for(int i = 0; i<size; ++i)
     {
-        if(byte = 16)
-        {
-            byte = 0;
-        }
+        count = 0;
+        byte = 0;
         for(int j = 0; j<128; ++j)
         {
-            if(count = 8)
+            if(count == 8)
             {
                 count = 0;
+                ++byte;
             }
-            *(KeyBits+i) = GammaObj.GetBits(i,j) ^ SeparatorObj.DecToBool(byte,count);
+            *(KeyBits+i) += char('0' + (GammaObj.GetBits(i,j) ^ SeparatorObj.DecToBool(byte,count)));
             ++count;
         }
-        ++byte;
     }
 }
 
-void CryptoKey::GetAllBitKey(Separator& SeparatorObj, std::ifstream& in)
+void CryptoKey::GetAllBitKey(Separator& SeparatorObj)
 {
     int temp_size = SeparatorObj.GetSize() * 4;
     for(int i = 0; i<size; ++i)
     {
-        for(int j = 0; j<128; ++j)
-        {
-            gamma[i][j] = KeyBits[i][j];
-        }
+        gamma[i] = KeyBits[i];
         gamma[i].resize(temp_size);
         for(int j = 0; j<temp_size-128; ++j)
         {
-            gamma[i][j+128] = gamma[i][j] ^ gamma[i][j+1] ^ gamma[i][j+2] ^ gamma[i][j+7];
+            gamma[i][j+128] = char('0' + (gamma[i][j] ^ gamma[i][j+1] ^ gamma[i][j+2] ^ gamma[i][j+7]));
         }
     }
 }
 
-void CryptoKey::GetMessage(Separator& SeparatorObj)
+void CryptoKey::GetMessageInBits(Separator& SeparatorObj)
 {
-    int sizebyte = size/2;
+    int count;
+    int byte;
+    int sizebyte = SeparatorObj.GetSize() * 4;
     for(int i = 0; i<size; ++i)
     {
+        count = 0;
+        byte = 0;
+        text[i].resize(sizebyte);
         for(int j = 0; j<sizebyte; ++j)
         {
-            text[i][j] ^= gamma[i][j];
+            if(count == 8)
+            {
+                count = 0;
+                ++byte;
+            }
+            text[i][j] = char('0' + (SeparatorObj.DecToBool(byte,count) ^ gamma[i][j]));
+            ++count;
         }
     }
+}
+
+void CryptoKey::SeparateMessage()
+{
+    
 }
