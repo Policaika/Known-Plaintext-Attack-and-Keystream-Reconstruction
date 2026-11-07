@@ -1,0 +1,8 @@
+2026-10-16T12:52:48
+device=server-room-54
+temperature_c=28.1
+humidity_pct=46.2
+fan_rpm=2487
+door_open=0
+alarm=0
+�

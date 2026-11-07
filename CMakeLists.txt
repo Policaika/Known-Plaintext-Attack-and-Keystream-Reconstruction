@@ -7,4 +7,5 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(LabCrypto
     class.h
+    func.cpp
     main.cpp)

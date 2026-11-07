@@ -125,7 +125,7 @@ void CryptoKey::GetFirst128BitKey(WayToGamma& GammaObj, Separator& SeparatorObj)
                 count = 0;
                 ++byte;
             }
-            *(KeyBits+i) += char('0' + (GammaObj.GetBits(i,j) ^ SeparatorObj.DecToBool(byte,count)));
+            *(KeyBits+i) += static_cast<char>(('0' + (GammaObj.GetBits(i,j) ^ SeparatorObj.DecToBool(byte,count))));
             ++count;
         }
     }
@@ -140,7 +140,7 @@ void CryptoKey::GetAllBitKey(Separator& SeparatorObj)
         gamma[i].resize(temp_size);
         for(int j = 0; j<temp_size-128; ++j)
         {
-            gamma[i][j+128] = char('0' + (gamma[i][j] ^ gamma[i][j+1] ^ gamma[i][j+2] ^ gamma[i][j+7]));
+            gamma[i][j+128] = static_cast<char>(('0' + (gamma[i][j] ^ gamma[i][j+1] ^ gamma[i][j+2] ^ gamma[i][j+7])));
         }
     }
 }
@@ -162,7 +162,7 @@ void CryptoKey::GetMessageInBits(Separator& SeparatorObj)
                 count = 0;
                 ++byte;
             }
-            text[i][j] = char('0' + (SeparatorObj.DecToBool(byte,count) ^ gamma[i][j]));
+            text[i][j] = static_cast<char>(('0' + (SeparatorObj.DecToBool(byte,count) ^ gamma[i][j])));
             ++count;
         }
     }
@@ -170,5 +170,40 @@ void CryptoKey::GetMessageInBits(Separator& SeparatorObj)
 
 void CryptoKey::SeparateMessage()
 {
-    
+    char temp_variable;
+    for(int i = 0; i<size; ++i)
+    {
+        temp_variable = 0;
+        for(int j = 0; j<text[i].size(); ++j)
+        {
+            temp_variable = (temp_variable << 1) | (text[i][j] - '0');
+            if(j % 8 == 7)
+            {
+                bytestext[i] += temp_variable;
+                temp_variable = 0;
+            }
+        }
+    }
+}
+
+int CryptoKey::CheckCorrectKey()
+{
+    for(int i = 0; i<size; ++i)
+    {
+        for(int j = 0; j<bytestext[i].size(); ++j)
+        {
+            if(bytestext[i][26] == '=' && bytestext[i][55] == '=' && bytestext[i][73] == '=' && bytestext[i][86] == '=' && bytestext[i][101] == '=' && bytestext[i][109] == '='
+            && bytestext[i][4] == '-' && bytestext[i][7] == '-' && bytestext[i][33] == '-' && bytestext[i][38] == '-'
+            && bytestext[i][53] == '_' && bytestext[i][69] == '_' && bytestext[i][82] == '_' && bytestext[i][96] == '_')
+            {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+void CryptoKey::PrintMessage(std::ofstream& out)
+{
+    out << bytestext[CheckCorrectKey()];
 }

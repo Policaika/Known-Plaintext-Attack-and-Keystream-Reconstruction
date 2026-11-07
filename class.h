@@ -80,6 +80,7 @@ class CryptoKey
         std::string* KeyBits;
         std::string* gamma;
         std::string* text;
+        std::string* bytestext;
     public:
         CryptoKey(WayToGamma& GammaObj)
         {
@@ -87,19 +88,25 @@ class CryptoKey
             KeyBits = new std::string[size];
             text = new std::string[size];
             gamma = new std::string[size];
+            bytestext = new std::string[size];
         }
 
         void GetFirst128BitKey(WayToGamma&, Separator&);
         void GetAllBitKey(Separator&);
         void GetMessageInBits(Separator&);
         void SeparateMessage();
+        int CheckCorrectKey();
+        void PrintMessage(std::ofstream&);
 
         ~CryptoKey()
         {
             delete[] text;
             delete[] KeyBits;
             delete[] gamma;
+            delete[] bytestext;
             KeyBits = nullptr;
+            text = nullptr;
+            bytestext = nullptr;
             gamma = nullptr;
         }
 };

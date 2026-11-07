@@ -28,5 +28,25 @@ int main(int argc, char* argv[])
         return -4;
     }
 
+    Separator ObjSeparator(fint);
+    WayToGamma ObjWayToGamma;
+    CryptoKey ObjCryptoKey(ObjWayToGamma);
+    ObjSeparator.SeparateInputNum(fint);
+    ObjSeparator.HexToDec();
+    ObjWayToGamma.GenerateCondidates();
+    ObjCryptoKey.GetFirst128BitKey(ObjWayToGamma,ObjSeparator);
+    ObjCryptoKey.GetAllBitKey(ObjSeparator);
+    ObjCryptoKey.GetMessageInBits(ObjSeparator);
+    ObjCryptoKey.SeparateMessage();
+
+    int minute = ObjCryptoKey.CheckCorrectKey();
+    if(minute == -1)
+    {
+        std::cerr << "Ключ не найден" << std::endl;
+        return -6;
+    }
+
+    ObjCryptoKey.PrintMessage(fout);
+
     return 0;
 }
